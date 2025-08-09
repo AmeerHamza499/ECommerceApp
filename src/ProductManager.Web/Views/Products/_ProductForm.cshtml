@@ -1,0 +1,71 @@
+@model ProductManager.Web.Models.ProductFormViewModel
+@{
+    var isEdit = Model.Id.HasValue;
+}
+<form asp-action="@(isEdit ? "Edit" : "Add")" asp-controller="Products" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" onsubmit="return window.submitAddForm(event)">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="ProductName" class="form-label"></label>
+            <input asp-for="ProductName" class="form-control" />
+            <span asp-validation-for="ProductName" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Sku" class="form-label"></label>
+            <input asp-for="Sku" class="form-control" />
+            <span asp-validation-for="Sku" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Price" class="form-label"></label>
+            <input asp-for="Price" class="form-control" />
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="CategoryId" class="form-label"></label>
+            <select asp-for="CategoryId" class="form-select" asp-items="@(new SelectList(Model.Categories, nameof(ProductManager.Core.Domain.Entities.Category.Id), nameof(ProductManager.Core.Domain.Entities.Category.Name)))">
+                <option value="">-- Select Category --</option>
+            </select>
+            <span asp-validation-for="CategoryId" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Status" class="form-label"></label>
+            <select asp-for="Status" class="form-select">
+                <option value="1">Active</option>
+                <option value="0">Inactive</option>
+            </select>
+        </div>
+        <div class="col-md-8">
+            <label asp-for="Photo" class="form-label">Product Photo (.jpg/.jpeg/.png, < 25KB)</label>
+            <input asp-for="Photo" type="file" accept=".jpg,.jpeg,.png" class="form-control" id="fileInput" />
+            <span asp-validation-for="Photo" class="text-danger"></span>
+            <small class="text-muted">PNG/JPG only, maximum 25 KB.</small>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <img id="previewImg" src="@(Model.ExistingPhotoPath ?? "")" alt="Preview" style="max-width: 120px; max-height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd;" />
+        </div>
+        <input type="hidden" asp-for="ExistingPhotoPath" />
+    </div>
+    <div class="mt-4 d-flex justify-content-end gap-2">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+    </div>
+</form>
+
+@section Scripts{
+<script>
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('previewImg');
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+</script>
+}

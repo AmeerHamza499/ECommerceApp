@@ -1,0 +1,115 @@
+@model List<ProductManager.Web.Models.ProductListItemViewModel>
+@using ProductManager.Core.Domain.Entities
+@{
+    var categories = (IEnumerable<ProductManager.Core.Domain.Entities.Category>)ViewBag.Categories;
+    var filter = (ProductManager.Web.Models.ProductListFilterViewModel)ViewBag.Filter;
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Products</h2>
+        <button id="btnAdd" class="btn btn-primary">Add Product</button>
+    </div>
+
+    <form method="get" asp-action="Index" asp-controller="Products" class="row g-2 mb-3">
+        <div class="col-md-4">
+            <input type="text" name="Search" value="@filter?.Search" class="form-control" placeholder="Search by name or SKU" />
+        </div>
+        <div class="col-md-3">
+            <select name="CategoryId" class="form-select">
+                <option value="">All Categories</option>
+                @foreach (var c in categories)
+                {
+                    <option value="@c.Id" selected="@(filter?.CategoryId == c.Id)">@c.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100">Filter</button>
+        </div>
+    </form>
+
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>SKU</th>
+                <th class="text-end">Price</th>
+                <th>Photo</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.ProductName</td>
+                <td>@item.Sku</td>
+                <td class="text-end">@item.Price.ToString("0.00")</td>
+                <td>
+                    @if (!string.IsNullOrWhiteSpace(item.PhotoPath))
+                    {
+                        <img src="@item.PhotoPath" alt="Photo" style="width:50px;height:50px;object-fit:cover;border-radius:4px;" />
+                    }
+                </td>
+                <td>@item.CategoryName</td>
+                <td>
+                    @if (item.Status == ProductStatus.Active) { <span class="badge bg-success">Active</span> } else { <span class="badge bg-secondary">Inactive</span> }
+                </td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" asp-controller="Products" asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                    <form method="post" asp-controller="Products" asp-action="Delete" asp-route-id="@item.Id" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this product?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Product</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="addModalBody">
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('btnAdd').addEventListener('click', async () => {
+            const res = await fetch('/products/add');
+            const html = await res.text();
+            document.getElementById('addModalBody').innerHTML = html;
+            const modal = new bootstrap.Modal(document.getElementById('addModal'));
+            modal.show();
+        });
+
+        async function submitAddForm(event) {
+            event.preventDefault();
+            const form = event.target.closest('form');
+            const data = new FormData(form);
+            const res = await fetch('/products/add', {
+                method: 'POST',
+                body: data
+            });
+            const contentType = res.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                const json = await res.json();
+                if (json.success) { window.location.reload(); return; }
+            }
+            const html = await res.text();
+            document.getElementById('addModalBody').innerHTML = html;
+        }
+        window.submitAddForm = submitAddForm;
+    </script>
+}
