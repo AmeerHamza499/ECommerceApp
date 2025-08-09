@@ -93,23 +93,5 @@
             const modal = new bootstrap.Modal(document.getElementById('addModal'));
             modal.show();
         });
-
-        async function submitAddForm(event) {
-            event.preventDefault();
-            const form = event.target.closest('form');
-            const data = new FormData(form);
-            const res = await fetch('/products/add', {
-                method: 'POST',
-                body: data
-            });
-            const contentType = res.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
-                const json = await res.json();
-                if (json.success) { window.location.reload(); return; }
-            }
-            const html = await res.text();
-            document.getElementById('addModalBody').innerHTML = html;
-        }
-        window.submitAddForm = submitAddForm;
     </script>
 }

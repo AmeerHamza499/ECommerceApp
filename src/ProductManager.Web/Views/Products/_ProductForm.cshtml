@@ -2,7 +2,8 @@
 @{
     var isEdit = Model.Id.HasValue;
 }
-<form asp-action="@(isEdit ? "Edit" : "Add")" asp-controller="Products" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" onsubmit="return window.submitAddForm(event)">
+<form asp-action="@(isEdit ? "Edit" : "Add")" asp-controller="Products" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" onsubmit="return window.handleProductFormSubmit(event)">
+    @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     <div class="row g-3">
         <div class="col-md-6">
@@ -67,5 +68,24 @@
             }
         });
     }
+
+    async function handleProductFormSubmit(event) {
+        const form = event.target.closest('form');
+        const inModal = document.getElementById('addModal') !== null;
+        if (!inModal) { return true; }
+        event.preventDefault();
+        const data = new FormData(form);
+        const res = await fetch(form.action, { method: 'POST', body: data });
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+            const json = await res.json();
+            if (json.success) { window.location.reload(); return false; }
+        }
+        const html = await res.text();
+        const body = document.getElementById('addModalBody');
+        if (body) body.innerHTML = html;
+        return false;
+    }
+    window.handleProductFormSubmit = handleProductFormSubmit;
 </script>
 }
